@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">My-City-app</string>
+    <string name="category_coffee_shops">Coffee Shops</string>
+    <string name="category_restaurants">Restaurants</string>
+    <string name="category_kid_friendly_places">Kid-friendly places</string>
+    <string name="category_parks">Parks</string>
+    <string name="category_shopping_centers">Shopping centers</string>
+    <string name="category_other">Other</string>
 </resources>

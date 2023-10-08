@@ -1,4 +1,4 @@
-package com.example.my_city_app.data
+package com.example.my_city_app.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
