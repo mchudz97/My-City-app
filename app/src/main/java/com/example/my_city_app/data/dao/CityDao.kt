@@ -15,10 +15,10 @@ interface CityDao {
     fun getAll(): Flow<List<City>>
     @Query("Select * from city where city.id = :id")
     fun get(id: Int): Flow<City>
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(city: City)
     @Delete
     suspend fun delete(city: City)
-    @Update(onConflict = OnConflictStrategy.IGNORE)
+    @Update(onConflict = OnConflictStrategy.ABORT)
     suspend fun update(city: City)
 }

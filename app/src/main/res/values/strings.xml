@@ -1,9 +1,16 @@
 <resources>
-    <string name="app_name">My-City-app</string>
+    <string name="app_name">My Cities</string>
     <string name="category_coffee_shops">Coffee Shops</string>
     <string name="category_restaurants">Restaurants</string>
     <string name="category_kid_friendly_places">Kid-friendly places</string>
     <string name="category_parks">Parks</string>
     <string name="category_shopping_centers">Shopping centers</string>
     <string name="category_other">Other</string>
+    <string name="error_duplicate">City %s already exists.</string>
+    <string name="label_recomm_title">Title</string>
+    <string name="placeholder_recomm_description">Tell something more...</string>
+    <string name="rate_error">Rate must be selected.</string>
+    <string name="title_error">Title must not be empty.</string>
+    <string name="description_error">Description must not be empty.</string>
+    <string name="label_recomm_description">Description</string>
 </resources>
