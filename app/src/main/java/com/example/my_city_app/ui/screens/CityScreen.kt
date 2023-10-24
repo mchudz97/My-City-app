@@ -147,7 +147,8 @@ fun MainScreen(
                     Text(
                         text = stringResource(id = R.string.app_name)
                     )
-                })
+                }
+            )
         },
         floatingActionButton = {
             if(focused == null)
@@ -390,6 +391,7 @@ fun CreationDialog(
                             )
                         }
                     },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(
