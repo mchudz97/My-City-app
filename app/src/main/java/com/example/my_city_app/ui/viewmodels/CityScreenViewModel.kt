@@ -11,8 +11,11 @@ import com.example.my_city_app.data.model.City
 import com.example.my_city_app.data.repository.CityRepository
 import com.example.my_city_app.utils.TextFormat
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.lang.IllegalArgumentException
 
 sealed interface CityScreenUiState{
     data class Default(val cities: List<City>) : CityScreenUiState
@@ -23,55 +26,68 @@ sealed interface CityScreenUiState{
 class CityScreenViewModel(
     private val cityRepository: CityRepository
 ) : ViewModel() {
-    val uiState: MutableStateFlow<CityScreenUiState> = MutableStateFlow(
+    private val _uiState: MutableStateFlow<CityScreenUiState> = MutableStateFlow(
         CityScreenUiState.Default(emptyList())
     )
+    val uiState: StateFlow<CityScreenUiState> = _uiState.asStateFlow()
     init{
         toListView()
     }
     fun toListView() {
         viewModelScope.launch {
             cityRepository.getAllCitiesStream().collect{
-                uiState.value = CityScreenUiState.Default(it)
+                _uiState.value = CityScreenUiState.Default(it)
             }
         }
     }
     fun beginCreating() {
-        val state = uiState.value as CityScreenUiState.Default
-        uiState.value = CityScreenUiState.Creating(cities = state.cities, city = City(name = ""))
+        val state = _uiState.value as CityScreenUiState.Default
+        _uiState.value = CityScreenUiState.Creating(cities = state.cities, city = City(name = ""))
     }
     suspend fun finishCreating() {
-        val state = uiState.value as CityScreenUiState.Creating
+        val state = _uiState.value as CityScreenUiState.Creating
         holdDraft(TextFormat.removeUnexpectedSpaces(state.city.name))
-        cityRepository.insertCity((uiState.value as CityScreenUiState.Creating).city)
+        if((_uiState.value as CityScreenUiState.Creating).city.name.isEmpty())
+            throw IllegalArgumentException("City Name cannot be empty.")
+        cityRepository.insertCity((_uiState.value as CityScreenUiState.Creating).city)
         toListView()
     }
     fun beginEditing(city: City) {
-        val state = uiState.value as CityScreenUiState.Focusing
-        uiState.value = CityScreenUiState.Editing(cities = state.cities, city = city)
+        val state = _uiState.value as CityScreenUiState.Focusing
+        _uiState.value = CityScreenUiState.Editing(cities = state.cities, city = city)
     }
     suspend fun finishEditing() {
-        val state = uiState.value
+        val state = _uiState.value as CityScreenUiState.Editing
         holdDraft(
             TextFormat.removeUnexpectedSpaces(
-                (state as CityScreenUiState.Editing).city.name
+                state.city.name
             )
         )
+        if(state.city.name.isEmpty())
+            throw IllegalArgumentException("City Name cannot be empty.")
         updateCity()
         toListView()
     }
     fun focus(city: City) {
-        val state = uiState.value as CityScreenUiState.Default
-        uiState.value = CityScreenUiState.Focusing(state.cities, city)
+        when(val state = _uiState.value) {
+            is CityScreenUiState.Default -> {
+                _uiState.value = CityScreenUiState.Focusing(state.cities, city)
+            }
+            is CityScreenUiState.Focusing -> {
+                _uiState.value = CityScreenUiState.Focusing(state.cities, city)
+            }
+            is CityScreenUiState.Editing -> { }
+            is CityScreenUiState.Creating -> { }
+        }
     }
     fun holdDraft(name: String) {
         when(uiState.value) {
-            is CityScreenUiState.Creating -> uiState.update {
+            is CityScreenUiState.Creating -> _uiState.update {
                 (it as CityScreenUiState.Creating).copy(
                     city = it.city.copy(name = name)
                 )
             }
-            is CityScreenUiState.Editing -> uiState.update {
+            is CityScreenUiState.Editing -> _uiState.update {
                 (it as CityScreenUiState.Editing).copy(
                     city = it.city.copy(name = name)
                 )
@@ -81,11 +97,11 @@ class CityScreenViewModel(
         }
     }
     suspend fun removeCity(city: City) {
-        if(uiState.value is CityScreenUiState.Focusing)
+        if(_uiState.value is CityScreenUiState.Focusing)
             cityRepository.deleteCity(city)
     }
-    suspend fun updateCity() {
-        val state = uiState.value
+    private suspend fun updateCity() {
+        val state = _uiState.value
         if(state is CityScreenUiState.Editing)
             cityRepository.updateCity(state.city)
     }

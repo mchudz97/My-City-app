@@ -2,7 +2,6 @@ package com.example.my_city_app.ui.screens
 
 import android.app.Activity
 import android.database.sqlite.SQLiteConstraintException
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -25,24 +24,27 @@ import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,7 +67,6 @@ import com.example.my_city_app.ui.viewmodels.CityScreenUiState
 import com.example.my_city_app.ui.viewmodels.CityScreenViewModel
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun HomeScreen(
     navigateToCategories: (String) -> Unit,
@@ -86,6 +87,12 @@ fun HomeScreen(
             )
         }
         is CityScreenUiState.Focusing -> {
+
+            val deletionConfirmation = rememberSaveable {
+                mutableStateOf(false)
+            }
+            val coroutineScope = rememberCoroutineScope()
+
             MainScreen(
                 cities = uiState.cities,
                 focused = uiState.focusedCity,
@@ -93,8 +100,22 @@ fun HomeScreen(
                 onHold = viewModel::focus,
                 onCancel = viewModel::toListView,
                 onEditClick = viewModel::beginEditing,
-                onDeleteClick = viewModel::removeCity
+                onDeleteClick = { deletionConfirmation.value = true }
             )
+
+            if(deletionConfirmation.value) {
+
+                YesNoDialog(
+                    description = stringResource(id = R.string.confirm_question),
+                    yesAction = {
+                        coroutineScope.launch {
+                            viewModel.removeCity(uiState.focusedCity)
+                        }
+                        deletionConfirmation.value = false
+                    },
+                    noAction = { deletionConfirmation.value = false }
+                )
+            }
         }
         is CityScreenUiState.Editing -> {
             MainScreen(
@@ -244,7 +265,7 @@ fun CityCard(
         modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { },
+                onClick = { onClick("$ROUTE_CATEGORY/${city.id}") },
                 onLongClick = { if (!isFocused) onHold(city) }
             )
     ) {
@@ -254,18 +275,26 @@ fun CityCard(
         ){
             if(isModified) {
                 var isDuplicate by remember { mutableStateOf(false) }
+                var isInvalidName by remember { mutableStateOf(false) }
 
                 TextField(
                     value = city.name,
                     onValueChange = {
                         updateName(it)
                         isDuplicate = false
+                        isInvalidName = false
                     },
                     isError = isDuplicate,
                     supportingText = {
                         if(isDuplicate) {
                             Text(
                                 text = stringResource(id = R.string.error_duplicate, city.name),
+                                color = Color.Red
+                            )
+                        }
+                        if(isInvalidName) {
+                            Text(
+                                text = stringResource(id = R.string.error_city_name),
                                 color = Color.Red
                             )
                         }
@@ -279,6 +308,8 @@ fun CityCard(
                                 updateCity()
                             } catch (e: SQLiteConstraintException) {
                                 isDuplicate = true
+                            } catch (e: IllegalArgumentException) {
+                                isInvalidName = true
                             }
                         }
                     }
@@ -302,13 +333,10 @@ fun CityCard(
                 )
                 if(!isFocused) {
                     IconButton(
-                        onClick = {
-                            onClick("$ROUTE_CATEGORY/${city.id}")
-                            Log.d("Route", "$ROUTE_CATEGORY/${city.id}")
-                        }
+                        onClick ={ onHold(city) }
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.KeyboardArrowRight,
+                            imageVector = Icons.Outlined.MoreVert,
                             contentDescription = null
                         )
                     }
@@ -357,10 +385,12 @@ fun CreationDialog(
     toDefaultState: () -> Unit
 ) {
     var isDuplicate by remember { mutableStateOf(false) }
+    var isInvalidName by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = { toDefaultState() }) {
         Surface(
+            color = MaterialTheme.colorScheme.tertiaryContainer,
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp))
                 .border(width = 2.dp, color = Color.Black, shape = RoundedCornerShape(16.dp))
@@ -381,8 +411,9 @@ fun CreationDialog(
                     onValueChange = {
                         updateDraft(it)
                         isDuplicate = false
+                        isInvalidName = false
                     },
-                    isError = isDuplicate,
+                    isError = isDuplicate or isInvalidName,
                     supportingText = {
                         if(isDuplicate) {
                             Text(
@@ -390,7 +421,14 @@ fun CreationDialog(
                                 color = Color.Red
                             )
                         }
+                        if(isInvalidName) {
+                            Text(
+                                text = stringResource(id = R.string.error_city_name),
+                                color = Color.Red
+                            )
+                        }
                     },
+                    colors = TextFieldDefaults.colors(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -405,6 +443,8 @@ fun CreationDialog(
                                     save()
                                 } catch (e: SQLiteConstraintException) {
                                     isDuplicate = true
+                                } catch (e: IllegalArgumentException) {
+                                    isInvalidName = true
                                 }
                             }
                         }
