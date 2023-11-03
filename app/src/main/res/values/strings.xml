@@ -8,9 +8,19 @@
     <string name="category_other">Other</string>
     <string name="error_duplicate">City %s already exists.</string>
     <string name="label_recomm_title">Title</string>
-    <string name="placeholder_recomm_description">Tell something more...</string>
+    <string name="placeholder_recomm_description">Tell something more…</string>
     <string name="rate_error">Rate must be selected.</string>
     <string name="title_error">Title must not be empty.</string>
     <string name="description_error">Description must not be empty.</string>
     <string name="label_recomm_description">Description</string>
+    <string name="label_recomm_rate">Rate</string>
+    <string name="label_recomm_last_edit">Last edited</string>
+    <string name="label_city">City</string>
+    <string name="label_category">Category</string>
+    <string name="confirm_question">Are you sure?</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+    <string name="error_city_name">City name cannot be empty.</string>
+    <string name="helper_category">Select category…</string>
 </resources>
