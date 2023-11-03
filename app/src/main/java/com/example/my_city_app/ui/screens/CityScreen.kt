@@ -20,10 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -155,7 +152,7 @@ fun MainScreen(
     onCreateClick: () -> Unit = { },
     onEditClick: (City) -> Unit = { },
     onCancel: () -> Unit = { },
-    onDeleteClick: suspend (City) -> Unit = { },
+    onDeleteClick: () -> Unit = { },
     updateName: (String) -> Unit = { },
     updateCity: suspend () -> Unit = { },
     modifier: Modifier = Modifier,
@@ -208,7 +205,7 @@ fun CitiesList(
     onHold: (City) -> Unit,
     onEditClick: (City) -> Unit = { },
     onCancel: () -> Unit = { },
-    onDeleteClick: suspend (City) -> Unit = { },
+    onDeleteClick: () -> Unit = { },
     updateName: (String) -> Unit = { },
     updateCity: suspend () -> Unit = { },
     modifier: Modifier = Modifier
@@ -247,7 +244,7 @@ fun CityCard(
     onClick: (String) -> Unit,
     onHold: (City) -> Unit,
     onEditClick: (City) -> Unit = { },
-    onDeleteClick: suspend (City) -> Unit = { },
+    onDeleteClick: () -> Unit = { },
     onCancel: () -> Unit = { },
     updateName: (String) -> Unit = { },
     updateCity: suspend () -> Unit = { },
@@ -257,7 +254,6 @@ fun CityCard(
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-
     Card(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 12.dp
@@ -301,8 +297,8 @@ fun CityCard(
                     },
                     modifier = Modifier.weight(1.0f)
                 )
-                IconButton(
-                    onClick = {
+                EditTools(
+                    onSave = {
                         coroutineScope.launch {
                             try {
                                 updateCity()
@@ -312,19 +308,9 @@ fun CityCard(
                                 isInvalidName = true
                             }
                         }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Check,
-                        contentDescription = null
-                    )
-                }
-                IconButton(onClick = onCancel ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Clear,
-                        contentDescription = null
-                    )
-                }
+                    },
+                    onCancel = onCancel
+                )
             }
             else{
                 Text(
@@ -342,35 +328,11 @@ fun CityCard(
                     }
                 }
                 else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = onCancel) {
-                            Icon(
-                                imageVector = Icons.Outlined.Clear,
-                                contentDescription = null
-                            )
-                        }
-                        IconButton(onClick = { onEditClick(city) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = null
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    onDeleteClick(city)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = null,
-                                tint = Color.Red
-                            )
-                        }
-                    }
+                    BaseTools(
+                        onEditClick = { onEditClick(city) },
+                        onDelete = onDeleteClick,
+                        onCancel = onCancel
+                    )
                 }
             }
         }
