@@ -84,7 +84,6 @@ fun HomeScreen(
             )
         }
         is CityScreenUiState.Focusing -> {
-
             val deletionConfirmation = rememberSaveable {
                 mutableStateOf(false)
             }

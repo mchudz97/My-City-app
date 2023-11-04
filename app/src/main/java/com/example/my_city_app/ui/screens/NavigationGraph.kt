@@ -33,7 +33,10 @@ fun MyCityNavHost(
         })
         ) {
             RecommendationScreen(
-                onBackClicked = navController::popBackStack,
+                onBackClicked = {
+                    if(navController.previousBackStackEntry != null)
+                        navController.popBackStack()
+                },
                 onCreateClick = navController::navigate,
                 windowMode = windowSize,
             )
